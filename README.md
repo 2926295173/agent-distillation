@@ -44,7 +44,7 @@ pip install -e .[distill]
 
 ### ➕ Optional: Retriever Environment (used in our paper)
 
-Want to reproduce or extend our retriever-enhanced setup? We follow the [Search-R1](https://github.com/PeterGriffinJin/Search-R1) environment.
+Want to reproduce or extend our retriever setup? We follow the [Search-R1](https://github.com/PeterGriffinJin/Search-R1) environment.
 
 Expand the section below for setup instructions.
 <details>
@@ -78,7 +78,9 @@ gzip -d $save_path/wiki-18.jsonl.gz
 
 </details>
 
-## 🚀 Quickstart: Run the Distilled Agent (No Retriever Setup Required)
+## 🚀 Quickstart: Run the Distilled Agent
+
+(No Retriever Setup Required)
 
 You can quickly try out the distilled 1.5B agent from the Huggingface Hub without setting up a retriever, just use the search tool from smolagents!
 
