@@ -19,6 +19,7 @@ In addition to the powerful capabilities of `smolagents`, this library introduce
 3. 📊 **Benchmarking**: Evaluate your distilled agents on factual and mathematical reasoning benchmarks using a single script.
 
 ## Recent Updates
+- [2025.06] We upload the teacher agent trajectories (both [baseline](https://huggingface.co/datasets/agent-distillation/Qwen2.5-32B-Instruct_agent_trajectories_2k) and [first-thought prefix](https://huggingface.co/datasets/agent-distillation/Qwen2.5-32B-Instruct_agent_trajectories_2k_prefix) version) and the [agent-distilled Qwen2.5-1.5B-Instruct](https://huggingface.co/agent-distillation/agent_distilled_Qwen2.5-1.5B-Instruct) model on huggingface hub!
 - [2025.05] We open-source the Agent Distillation codebase.
 
 ## 📦 Contents
