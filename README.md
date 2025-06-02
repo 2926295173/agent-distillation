@@ -25,8 +25,9 @@ In addition to the powerful capabilities of `smolagents`, this library introduce
 ## 📦 Contents
 
 1. [Installation](#installation)
-2. [Quickstart: How to Distill Agents](#quickstart-how-to-distill-agents)
-3. [Acknowledgements](#acknowledgements)
+2. [Quickstart: Run the Distilled Agent](#quickstart-run-distilled-agent)
+3. [Quickstart: How to Distill Agents](#quickstart-how-to-distill-agents)
+4. [Acknowledgements](#acknowledgements)
 
 
 ## 🛠 Installation
@@ -76,6 +77,20 @@ gzip -d $save_path/wiki-18.jsonl.gz
 ```
 
 </details>
+
+## 🚀 Quickstart: Run the Distilled Agent (No Retriever Setup Required)
+
+You can quickly try out the distilled 1.5B agent from the Huggingface Hub without setting up a retriever, just use the search tool from smolagents!
+
+To get started, run the following script:
+```bash
+bash scripts/inference/serve_slm_no_retriever.sh
+# Then, in a separate terminal:
+python examples/quick_start.py
+```
+You can now type in any question or task you'd like to test with the *distilled* agent.
+
+> ⚠️ Note: This agent was trained using a Wikipedia-based retriever. Results may be less accurate when using a general search engine.
 
 ## ⚗️ Quickstart: How to Distill Agents
 
