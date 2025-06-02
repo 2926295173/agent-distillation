@@ -25,7 +25,7 @@ In addition to the powerful capabilities of `smolagents`, this library introduce
 ## 📦 Contents
 
 1. [Installation](#installation)
-2. [Quickstart: Run the Distilled Agent](#quickstart-run-distilled-agent)
+2. [Quickstart: Run the Distilled Agent](#quickstart-run-the-distilled-agent)
 3. [Quickstart: How to Distill Agents](#quickstart-how-to-distill-agents)
 4. [Acknowledgements](#acknowledgements)
 
