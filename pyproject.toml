@@ -28,6 +28,7 @@ distill = [
   "vllm",
   "trl",
   "numpy>=1.21.2",
+  "rich",
 ]
 torch = [
   "torch",
