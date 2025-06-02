@@ -130,7 +130,7 @@ Curious about more capabilities? Check out the [original smolagents repository](
 
 ## 🚧 Future Plan
 
-- [ ] Release teacher trajectories and distilled small LMs as baselines.
+- [x] Release teacher trajectories and distilled small LMs as baselines.
 - [ ] Add detailed instructions for first-thought prefix.
 - [ ] Provide utilities for small LMs to use tools via MCP.
 
