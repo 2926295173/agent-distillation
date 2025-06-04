@@ -150,3 +150,17 @@ We sincerely thank the developers and maintainers of these projects.
 
 ## ⚠️ Disclaimer
 This is not an official product of KRAFTON Inc. or DeepAuto.ai. It is released solely for research purposes.
+
+## Citation
+If you find our work useful, please cite our work:
+```
+@misc{kang2025distillingllmagent,
+      title={Distilling LLM Agent into Small Models with Retrieval and Code Tools}, 
+      author={Minki Kang and Jongwon Jeong and Seanie Lee and Jaewoong Cho and Sung Ju Hwang},
+      year={2025},
+      eprint={2505.17612},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL},
+      url={https://arxiv.org/abs/2505.17612}, 
+}
+```
