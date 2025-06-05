@@ -144,14 +144,32 @@ class ActionStep(MemoryStep):
 
 
 @dataclass
+class ActionFinalizeStep(ActionStep):
+    def to_messages(self) -> List[Message]:
+        messages = self.model_input_messages
+        messages += [
+            Message(role=MessageRole.ASSISTANT, content=[{"type": "text", "text": self.model_output}])
+        ]
+        return messages
+
+
+@dataclass
 class PlanningStep(MemoryStep):
     model_input_messages: List[Message]
     model_output_message: ChatMessage
     plan: str
+    raw_plan: str
 
-    def to_messages(self, summary_mode: bool, **kwargs) -> List[Message]:
+    def to_messages(self, summary_mode: bool, train_mode: bool = False, **kwargs) -> List[Message]:
         if summary_mode:
             return []
+        if train_mode:
+            messages = self.model_input_messages
+            messages += [
+                Message(role=MessageRole.ASSISTANT, content=[{"type": "text", "text": self.raw_plan}])
+            ]
+            return messages
+
         return [
             Message(role=MessageRole.ASSISTANT, content=[{"type": "text", "text": self.plan.strip()}]),
             Message(role=MessageRole.USER, content=[{"type": "text", "text": "Now go on and execute this plan."}]),
