@@ -44,7 +44,7 @@ if TYPE_CHECKING:
 from .agent_types import AgentAudio, AgentImage, AgentType, handle_agent_output_types
 from .default_tools import TOOL_MAPPING, FinalAnswerTool
 from .local_python_executor import BASE_BUILTIN_MODULES, LocalPythonExecutor, PythonExecutor, fix_final_answer_code
-from .memory import ActionStep, AgentMemory, FinalAnswerStep, PlanningStep, SystemPromptStep, TaskStep, ToolCall
+from .memory import ActionStep, AgentMemory, FinalAnswerStep, PlanningStep, SystemPromptStep, TaskStep, ToolCall, ActionFinalizeStep
 from .models import (
     ChatMessage,
     MessageRole,
@@ -207,6 +207,7 @@ class MultiStepAgent:
         description: Optional[str] = None,
         provide_run_summary: bool = False,
         final_answer_checks: Optional[List[Callable]] = None,
+        use_short_system_message: bool = False
     ):
         self.agent_name = self.__class__.__name__
         self.model = model
@@ -413,7 +414,7 @@ You have been provided with these additional arguments, that you can access usin
 
     def _handle_max_steps_reached(self, task: str, images: List["PIL.Image.Image"], step_start_time: float) -> Any:
         final_answer, input_messages = self.provide_final_answer(task, images)
-        final_memory_step = ActionStep(
+        final_memory_step = ActionFinalizeStep(
             step_number=self.step_number, error=AgentMaxStepsError("Reached max steps.", self.logger),
             model_input_messages=input_messages,
             model_output=final_answer,
@@ -447,6 +448,7 @@ You have been provided with these additional arguments, that you can access usin
             plan_message = self.model(input_messages, stop_sequences=["<end_plan>"])
             if type(plan_message) == list:
                 plan_message = plan_message[0]
+            raw_plan = deepcopy(plan_message.content) + "<end_plan>"
             plan = textwrap.dedent(
                 f"""Here are the facts I know and the plan of action that I will follow to solve the task:\n```\n{plan_message.content}\n```"""
             )
@@ -486,6 +488,7 @@ You have been provided with these additional arguments, that you can access usin
             plan_message = self.model(input_messages, stop_sequences=["<end_plan>"])
             if type(plan_message) == list:
                 plan_message = plan_message[0]
+            raw_plan = deepcopy(plan_message.content) + "<end_plan>"
             plan = textwrap.dedent(
                 f"""I still need to solve the task I was given:\n```\n{self.task}\n```\n\nHere are the facts I know and my new/updated plan of action to solve the task:\n```\n{plan_message.content}\n```"""
             )
@@ -494,6 +497,7 @@ You have been provided with these additional arguments, that you can access usin
         return PlanningStep(
             model_input_messages=input_messages,
             plan=plan,
+            raw_plan=raw_plan,
             model_output_message=plan_message,
         )
 
@@ -572,6 +576,11 @@ You have been provided with these additional arguments, that you can access usin
         if images:
             messages[0]["content"].append({"type": "image"})
         messages += self.write_memory_to_messages()[1:]
+
+        # Make a new task if task includes the "format" instruction
+        if "\n\nIMPORTANT:" in task:
+            task = task.split("\n\nIMPORTANT:")[0]
+
         messages += [
             {
                 "role": MessageRole.USER,
@@ -629,7 +638,6 @@ You have been provided with these additional arguments, that you can access usin
 
     def save_memory_to_logs(self, task: str):
         """Save the agent's memory to a log file in the logs directory.
-        This log can be used as the training dataset.
 
         Args:
             task (`str`): The task that was executed, used for the log filename.
@@ -671,41 +679,19 @@ You have been provided with these additional arguments, that you can access usin
             return result
 
         def serialize_memory_step(step):
-            """Serialize a memory step to its original format."""
-            step_dict = {
-                "step_number": getattr(step, 'step_number', None),
-                "start_time": getattr(step, 'start_time', None),
-                "end_time": getattr(step, 'end_time', None),
-                "duration": getattr(step, 'duration', None),
-                "model_input_messages": [serialize_chat_message(msg) for msg in step.model_input_messages] if hasattr(step, 'model_input_messages') else None,
-                "model_output_message": serialize_chat_message(step.model_output_message) if hasattr(step, 'model_output_message') else None,
-                "model_output": getattr(step, 'model_output', None),
-                "tool_calls": [
-                    {
-                        "name": tc.name,
-                        "arguments": tc.arguments,
-                        "id": tc.id
-                    } for tc in step.tool_calls
-                ] if hasattr(step, 'tool_calls') and step.tool_calls else None,
-                "action_output": getattr(step, 'action_output', None),
-                "observations": getattr(step, 'observations', None),
-                "error": str(step.error) if hasattr(step, 'error') and step.error else None
-            }
-
-            # Add step-specific fields
-            if isinstance(step, TaskStep):
+            step_dict = {}
+            if isinstance(step, PlanningStep):
                 step_dict.update({
-                    "task": step.task,
-                    "task_images": None  # Images are not serialized
+                    "messages": step.to_messages(summary_mode=False, train_mode=True)
                 })
-            elif isinstance(step, PlanningStep):
+            elif isinstance(step, ActionFinalizeStep):
                 step_dict.update({
-                    "plan": step.plan
+                    "messages": step.to_messages()
                 })
-            elif isinstance(step, FinalAnswerStep):
-                step_dict.update({
-                    "final_answer": str(step.final_answer)
-                })
+            # elif isinstance(step, FinalAnswerStep):
+            #     step_dict.update({
+            #         "final_answer": str(step.final_answer)
+            #     })
             # Remove None values to keep the JSON clean
             return {k: v for k, v in step_dict.items() if v is not None}
 
@@ -715,7 +701,9 @@ You have been provided with these additional arguments, that you can access usin
             "system_prompt": {
                 "system_prompt": self.memory.system_prompt.system_prompt
             },
-            "steps": [serialize_memory_step(step) for step in self.memory.steps if not isinstance(step, ActionStep)]
+            # This steps is used as additional messages
+            "steps": [serialize_memory_step(step) for step in self.memory.steps
+                if not isinstance(step, ActionStep) or isinstance(step, ActionFinalizeStep)]
         }
 
         # Get messages using the to_messages method from each step
@@ -723,8 +711,16 @@ You have been provided with these additional arguments, that you can access usin
         for step in self.memory.steps:
             if isinstance(step, PlanningStep):
                 messages.extend(step.to_messages(summary_mode=False))
-            else:
+            # elif isinstance(step, ActionFinalizeStep):
+            #     messages.extend(step.to_messages())
+            elif isinstance(step, TaskStep):
+                 messages.extend(step.to_messages())
+            elif isinstance(step, ActionStep):
+                if isinstance(step, ActionFinalizeStep):
+                    continue
                 messages.extend(step.to_messages())
+            else:
+                continue
 
         # Calculate cost information
         cost_info = self.calculate_cost()
@@ -1109,8 +1105,8 @@ You have been provided with these additional arguments, that you can access usin
         # Define pricing per 1K tokens (in USD)
         pricing = {
             # OpenAI GPT-4 models (as of March 2024)
-            'gpt-4o': {'input': 0.0025, 'output': 0.01},
-            'gpt-4o-mini': {'input': 0.0003, 'output': 0.0012},
+            'gpt-4o': {'input': 0.0025, 'output': 0.01},  # $2.5/1M input, $10/1M output
+            'gpt-4o-mini': {'input': 0.0003, 'output': 0.0012},  # $0.30/1M input, $1.20/1M output
             # Anthropic Claude models
             'claude-3-opus': {'input': 0.015, 'output': 0.075},
             'claude-3-sonnet': {'input': 0.003, 'output': 0.015},
