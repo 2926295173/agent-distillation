@@ -1,6 +1,6 @@
-# Research Examples
+# Experiments for Research
 
-This directory contains example code and experiments for testing and researching various aspects of agent distillation and reasoning.
+This directory contains codes for research experiments on various aspects of agent distillation.
 
 ## Directory Structure
 
