@@ -1,11 +1,23 @@
 # Research Examples
 
-some example code to test or research something
+This directory contains example code and experiments for testing and researching various aspects of agent distillation and reasoning.
 
-## run qa experiments using agent
+## Directory Structure
 
-```
-python run_qa_experiments.py --data_path /PATH/TO/DATA --model_type vllm --model_id Qwen/Qwen2.5-1.5B-Instruct --multithreading --fine_tuned --lora_folder /PATH/TO/LORA
-```
+- `unified_framework/`: Core framework for running experiments and evaluations
+- `train_utils/`: Utilities for training and data preprocessing
+- `scripts_train/`: Training scripts and configurations
+- `mp_configs/`: Multi-processing configurations
+- `first_thought_prefix/`: Prefix-based reasoning implementations
 
-### multi-trajectory sampling
+## Key Features
+- Supervised Fine-Tuning (SFT) with LoRA support
+- Multi-turn conversation handling
+- Prefix-based reasoning
+- Unified experiment framework
+- Answer scoring and evaluation
+- Multi-processing support
+
+## Basic Usage
+
+For usage, refer to scripts folder in the root.
