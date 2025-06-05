@@ -15,6 +15,13 @@ from smolagents.agents import populate_template
 PROMPT_TEMPLATES = yaml.safe_load(
     importlib.resources.files("smolagents.prompts").joinpath("code_agent.yaml").read_text()
 )
+INSTRUCTION1 = "\n\nIMPORTANT: Always provide a 'Thought:' sequence, and a 'Code:\n```py' sequence ending with '```<end_code>' sequence, else you will fail."
+INSTRUCTION2 = "\n\nIMPORTANT: Always provide a 'Thought:' sequence, and a 'Code:\n```py' sequence ending with '```<end_code>' sequence, else you will fail. For final answer in math problems, always return the answer in LaTex format."
+INSTRUCTION3 = "\n\nIMPORTANT: Always provide a 'Thought:' sequence, and a 'Code:\n```py' sequence ending with '```<end_code>' sequence, else you will fail. For math problems that are not multiple-choice, always output the final answer using LaTeX \\boxed{} format. Provide the exact value (e.g., \\boxed{\\frac{9}{14}}), not a decimal approximation (e.g., \\boxed{0.642857})."
+
+INSTRUCTIONS = [
+    INSTRUCTION3, INSTRUCTION2, INSTRUCTION1
+]
 
 ROLE_CONVERSION_DICT = {
     "MessageRole.SYSTEM": "system",
@@ -58,8 +65,15 @@ def clean_roles(messages):
             message["role"] = ROLE_CONVERSION_DICT[message["role"]]
     return messages
 
+def remove_instruction_from_user_message(messages):
+    for INSTRUCTION in INSTRUCTIONS:
+        if INSTRUCTION in messages[1]["content"]:
+            messages[1]["content"] = messages[1]["content"].replace(INSTRUCTION, "")
+        assert INSTRUCTION not in messages[1]["content"]
+    return messages
+
 def remove_reference_tags(text):
-    # remove every contents in <reference> ... </reference>
+    # <reference> ... </reference> 포함된 모든 내용을 삭제
     return re.sub(r'<reference>.*?</reference>', '', text, flags=re.DOTALL)
 
 def clean_user_message(messages):
@@ -115,6 +129,25 @@ def remove_last_user_message(
         messages = messages[:-1]
     return messages
 
+def clean_messages(messages):
+    messages = clean_roles(messages)
+    is_two_system = check_two_system_messages(messages)
+    if is_two_system:
+        import pdb; pdb.set_trace()
+    messages = remove_tool_call_from_messages(messages)
+    messages = get_clean_message_list(
+        messages,
+        role_conversions={
+            "tool-response": "user",
+            "tool-call": "assistant"
+        },
+        flatten_messages_as_text=True,
+    )
+    # messages = remove_instruction_from_user_message(messages)
+    messages = clean_user_message(messages)
+    messages = remove_last_user_message(messages)
+    return messages
+
 # Preprocess logs to messages only
 def preprocess_logs(log_path):
     prompt_template = PROMPT_TEMPLATES["system_prompt_short"]
@@ -141,11 +174,40 @@ def preprocess_logs(log_path):
         if not log["log_data"]:
             continue
         messages = log["log_data"]["messages"]
-        messages = clean_roles(messages)
-        is_two_system = check_two_system_messages(messages)
-        if is_two_system:
-            print("Two system message in messages detected!")
-            continue
+        messages = clean_messages(messages)
+        messages[0]["content"] = system_prompt
+
+        dataset.append({"messages": messages})
+        if i == 0:
+            print_pretty_messages(messages)
+        # dataset.append(
+        #     tokenizer.apply_chat_template(messages, tokenize=True, return_tensors="pt")
+        # )
+        # Append additional messages
+        for step in log["log_data"]["original_memory"]["steps"]:
+            if len(step) > 0 and step.get("messages", None):
+                additional_messages = clean_messages(step["messages"])
+                # print("Additional messages...")
+                # additional_messages = print_pretty_messages(additional_messages)
+                dataset.append({"messages": additional_messages})
+                n_planning += 1
+
+    print("##### Planning data", n_planning)
+    dataset = Dataset.from_list(dataset)
+    return dataset
+
+# Preprocess logs for the reward modeling
+def preprocess_reward_dataset(log_path):
+    rm_dataset = []
+    with open(log_path) as f:
+        for line in f:
+            log = json.loads(line)
+            for reward_data in log:
+                rm_dataset.append(reward_data)
+
+    dataset = []
+    for rm_data in rm_dataset:
+        messages = rm_data["messages"]
         messages = remove_tool_call_from_messages(messages)
         messages = get_clean_message_list(
             messages,
@@ -155,25 +217,44 @@ def preprocess_logs(log_path):
             },
             flatten_messages_as_text=True,
         )
-        messages = clean_user_message(messages)
         messages = remove_last_user_message(messages)
-        messages[0]["content"] = system_prompt
+        # print(messages)
+        if len(messages) == 1: continue
+        reward = rm_data["step_reward"]
+        dataset.append({
+            "prompt": messages,
+            "labels": reward
+        })
 
-        dataset.append({"messages": messages})
-        if i == 0:
-            print_pretty_messages(messages)
+    dataset = Dataset.from_list(dataset)
+    return dataset
 
-        # Append additional messages
-        if len(log["log_data"]["original_memory"]["steps"]) > 1:
-            steps = log["log_data"]["original_memory"]["steps"]
-            for j in range(1, len(steps)):
-                step = steps[j]
-                input_messages = step["model_input_messages"]
-                output_message = step["model_output_message"]
-                additional_messages = input_messages + [output_message]
-                dataset.append({"messages": additional_messages})
-                n_planning += 1
 
-    print("##### Planning data", n_planning)
+# Preprocess logs for the reward modeling
+def preprocess_rollout_dataset(log_path):
+    rm_dataset = []
+    with open(log_path) as f:
+        for line in f:
+            log = json.loads(line)
+            for reward_data in log:
+                rm_dataset.append(reward_data)
+
+    dataset = []
+    for rm_data in rm_dataset:
+        messages = rm_data["messages"]
+        messages = remove_tool_call_from_messages(messages)
+        messages = get_clean_message_list(
+            messages,
+            role_conversions={
+                "tool-response": "user",
+                "tool-call": "assistant"
+            },
+            flatten_messages_as_text=True,
+        )
+        messages = remove_last_user_message(messages)
+        dataset.append({
+            "prompt": messages,
+        })
+
     dataset = Dataset.from_list(dataset)
     return dataset
