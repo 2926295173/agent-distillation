@@ -29,6 +29,9 @@ distill = [
   "trl",
   "numpy>=1.21.2",
   "rich",
+  "word2number",
+  "matplotlib",
+  "seaborn"
 ]
 torch = [
   "torch",
