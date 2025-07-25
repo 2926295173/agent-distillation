@@ -31,7 +31,11 @@ distill = [
   "rich",
   "word2number",
   "matplotlib",
-  "seaborn"
+  "seaborn",
+  "sympy==1.12",
+  "antlr4-python3-runtime==4.11.1", # ! The version needs to be compatible with sympy.
+  "Pebble",
+  "timeout-decorator"
 ]
 torch = [
   "torch",
