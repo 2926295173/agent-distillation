@@ -1,3 +1,4 @@
+import os
 import json
 import yaml
 import importlib
@@ -101,12 +102,34 @@ def preprocess_sft_dataset(solution_type, datapath):
         dataset = preprocess_logs(datapath)
     return dataset
 
+def load_file_from_path(file_path):
+    """
+    Load a file from the given path.
+    
+    Args:
+        file_path (str): Path to the file.
+        
+    Returns:
+        dataset (list): loaded dataset
+    """
+    if os.path.exists(file_path):
+        dataset = []
+        with open(file_path, 'r') as f:
+            for line in f:
+                dataset.append(json.loads(line))
+        return dataset
+    else:
+        # try to download from Hugging Face Hub
+        from datasets import load_dataset
+        dataset = load_dataset(file_path)
+        dataset = dataset["train"].to_list()
+        for data in dataset:
+            data["log_data"] = json.loads(data["log_data"])
+        return dataset
+
 def preprocess_cot_dataset(datapath):
     system_prompt = load_prompt()
-    dataset = []
-    with open(datapath) as f:
-        for line in f:
-            dataset.append(json.loads(line))
+    dataset = load_file_from_path(datapath)
 
     processed_dataset = []
     for data in dataset:
@@ -163,10 +186,7 @@ def preprocess_logs(log_path):
         }
     )
 
-    logs = []
-    with open(log_path) as f:
-        for line in f:
-            logs.append(json.loads(line))
+    logs = load_file_from_path(log_path)
 
     dataset = []
     n_planning = 0
