@@ -43,6 +43,7 @@ MODEL_IDENTIFIERS = {
     "Qwen/Qwen2.5-3B-Instruct": "qwen-3B-instruct",
     "Qwen/Qwen2.5-7B-Instruct": "qwen-7B-instruct",
     "Qwen/Qwen2.5-Coder-1.5B-Instruct": "qwen-coder-1.5B-instruct",
+    "microsoft/Phi-3-mini-128k-instruct": "phi-3-mini-instruct",
 }
 
 def setup_savedir(args):
@@ -151,7 +152,11 @@ def main(args):
     ########## Setup model done ###############
 
     # Step 2: Setup dataset
-    tokenizer = AutoTokenizer.from_pretrained(args.model_name, pad_token='<|endoftext|>', padding_side='left', add_eos_token=True)
+    if "qwen" in args.model_name.lower():
+        tokenizer = AutoTokenizer.from_pretrained(args.model_name, pad_token='<|endoftext|>', padding_side='left', add_eos_token=True)
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(args.model_name, padding_side='left', add_eos_token=True)
+        tokenizer.pad_token = tokenizer.eos_token
 
     # Load dataset
     train_dataset = None
@@ -215,9 +220,17 @@ def main(args):
         model_init_kwargs={"attn_implementation": "flash_attention_2"}
     )
 
-    # only for Qwen
-    response_template = "<|im_start|>assistant"
-    instruction_template = "<|im_start|>user"
+    if "qwen" in args.model_name.lower():
+        response_template = "<|im_start|>assistant"
+        instruction_template = "<|im_start|>user"
+    elif "llama" in args.model_name.lower():
+        response_template = "<|start_header_id|>assistant<|end_header_id|>"
+        instruction_template = "<|start_header_id|>user<|end_header_id|>"
+    elif "phi" in args.model_name.lower():
+        response_template = "<|user|>\n"
+        instruction_template = "<|assistant|>\n"
+    else:
+        raise NotImplementedError(f"Unsupported model {args.model_name} for response template")
 
     if args.solution_type == "agent":
         collator = DataCollatorForCompletionOnlyLMMultiTurn(
