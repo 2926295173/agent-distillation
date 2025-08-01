@@ -44,6 +44,7 @@ MODEL_IDENTIFIERS = {
     "Qwen/Qwen2.5-7B-Instruct": "qwen-7B-instruct",
     "Qwen/Qwen2.5-Coder-1.5B-Instruct": "qwen-coder-1.5B-instruct",
     "microsoft/Phi-3-mini-128k-instruct": "phi-3-mini-instruct",
+    "microsoft/Phi-4-mini-instruct": "phi-4-mini-instruct",
 }
 
 def setup_savedir(args):
