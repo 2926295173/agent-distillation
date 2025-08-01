@@ -217,7 +217,6 @@ def main(args):
         load_best_model_at_end=load_best_model_at_end,
         gradient_checkpointing=args.gradient_checkpointing,
         save_safetensors=False,
-        model_init_kwargs={"attn_implementation": "flash_attention_2"}
     )
 
     if "qwen" in args.model_name.lower():
