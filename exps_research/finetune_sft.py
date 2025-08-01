@@ -125,7 +125,6 @@ def main(args):
             model = AutoModelForCausalLM.from_pretrained(
                 args.model_name,
                 torch_dtype=torch.bfloat16,
-                attn_implementation="flash_attention_2"
             )
             model = PeftModel.from_pretrained(
                 model,
