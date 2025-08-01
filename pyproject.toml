@@ -29,6 +29,7 @@ distill = [
   "trl",
   "numpy>=1.21.2",
   "rich",
+  "peft",
   "word2number",
   "matplotlib",
   "seaborn",
