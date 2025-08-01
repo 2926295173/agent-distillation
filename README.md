@@ -38,6 +38,7 @@ To install with the required libraries:
 conda create -n agents python=3.12
 conda activate agents
 pip install -e .[distill]
+pip install flash-attn --no-build-isolation # install flash attention for training
 ```
 
 > Note: If you want to run benchmarking, place your OpenAI API key in a file at `keys/openai-key/key.env`. This is required for LLM-as-a-judge evaluation on factual reasoning benchmarks.
