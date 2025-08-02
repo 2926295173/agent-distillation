@@ -46,7 +46,7 @@ For accurate math evaluation, follow the below instruction to install accurate `
 
 ```bash
 git clone https://github.com/huggingface/Qwen2.5-Math.git
-cd evaluation/latex2sympy
+cd Qwen2.5-Math/evaluation/latex2sympy
 pip install -e .
 ```
 
