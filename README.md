@@ -42,6 +42,14 @@ pip install -e .[distill]
 
 > Note: If you want to run benchmarking, place your OpenAI API key in a file at `keys/openai-key/key.env`. This is required for LLM-as-a-judge evaluation on factual reasoning benchmarks.
 
+For accurate math evaluation, follow the below instruction to install accurate `latex2sympy` library. (reference: https://github.com/huggingface/search-and-learn)
+
+```bash
+git clone https://github.com/huggingface/Qwen2.5-Math.git
+cd evaluation/latex2sympy
+pip install -e .
+```
+
 ### ➕ Optional: Retriever Environment (used in our paper)
 
 Want to reproduce or extend our retriever setup? We follow the [Search-R1](https://github.com/PeterGriffinJin/Search-R1) environment.
