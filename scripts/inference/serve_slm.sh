@@ -16,7 +16,10 @@ RETRIEVER_LOG="retriever_server.log"
 cleanup() {
   echo ""
   echo "🧹 Cleaning up retriever and vLLM..."
-  ps aux | grep '/home/jovyan/conda/agents/bin/python3.12' | grep 'vllm serve' | awk '{print $2}' | xargs kill
+  # If the process is not cleaned well
+  ps -eo pid,command \
+    grep -E '/home/.*/conda/.*/bin/python(3(\.[0-9]+)?)?$' | grep 'vllm' \
+    | grep -v grep | awk '{print $1}' | xargs kill
   pgrep -f 'retriever_server.py' | xargs -r kill
   wait
   echo "✅ Cleanup done."
