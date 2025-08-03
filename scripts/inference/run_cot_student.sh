@@ -29,7 +29,9 @@ cleanup() {
   echo "🧹 Cleaning up vLLM servers..."
   kill ${PIDS[*]} 2>/dev/null
   # If the process is not cleaned well
-  ps aux | grep '/home/jovyan/conda/agents/bin/python3.12' | grep 'vllm serve' | awk '{print $2}' | xargs kill
+  ps -eo pid,command \
+    grep -E '/home/.*/conda/.*/bin/python(3(\.[0-9]+)?)?$' | grep 'vllm' \
+    | grep -v grep | awk '{print $1}' | xargs kill
   wait
   echo "✅ All vLLM servers stopped."
 }
