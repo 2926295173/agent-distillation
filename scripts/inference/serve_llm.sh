@@ -13,7 +13,7 @@ cleanup() {
   echo ""
   echo "🧹 Cleaning up retriever and vLLM..."
   ps -eo pid,command \
-    grep -E '/home/.*/conda/.*/bin/python(3(\.[0-9]+)?)?$' | grep 'vllm' \
+    | grep -E '/home/.*/conda/.*/bin/python(3(\.[0-9]+)?)?$' | grep 'vllm' \
     | grep -v grep | awk '{print $1}' | xargs kill
   pgrep -f 'retriever_server.py' | xargs -r kill
   wait
