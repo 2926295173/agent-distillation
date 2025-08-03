@@ -30,7 +30,7 @@ cleanup() {
   kill ${PIDS[*]} 2>/dev/null
   # If the process is not cleaned well
   ps -eo pid,command \
-    grep -E '/home/.*/conda/.*/bin/python(3(\.[0-9]+)?)?$' | grep 'vllm' \
+    | grep -E '/home/.*/conda/.*/bin/python(3(\.[0-9]+)?)?$' | grep 'vllm' \
     | grep -v grep | awk '{print $1}' | xargs kill
   wait
   echo "✅ All vLLM servers stopped."
