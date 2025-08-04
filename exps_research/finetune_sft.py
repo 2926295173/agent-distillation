@@ -226,8 +226,8 @@ def main(args):
         response_template = "<|start_header_id|>assistant<|end_header_id|>"
         instruction_template = "<|start_header_id|>user<|end_header_id|>"
     elif "phi" in args.model_name.lower():
-        response_template = "<|user|>\n"
-        instruction_template = "<|assistant|>\n"
+        instruction_template = "<|user|>"
+        response_template = "<|assistant|>"
     else:
         raise NotImplementedError(f"Unsupported model {args.model_name} for response template")
 
